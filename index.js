@@ -1,11 +1,3 @@
-const core = require("@actions/core");
+import main from "./lib/main";
 
-async function run() {
-  try {
-    core.info("hello world");
-  } catch (e) {
-    core.setFailed(e);
-  }
-}
-
-void run();
+void main();
