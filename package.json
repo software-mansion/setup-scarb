@@ -1,0 +1,30 @@
+{
+  "name": "setup-scarb",
+  "version": "1.0.0",
+  "description": "Sets up Scarb in your GitHub Actions workflow.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "npm run fmt:check",
+    "fmt:check": "prettier -c .",
+    "fmt": "prettier -w .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/software-mansion/setup-scarb.git"
+  },
+  "author": "Software Mansion <contact@swmansion.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/software-mansion/setup-scarb/issues"
+  },
+  "homepage": "https://github.com/software-mansion/setup-scarb#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/io": "^1.1.3",
+    "@actions/tool-cache": "^2.0.1"
+  },
+  "devDependencies": {
+    "prettier": "2.8.8"
+  }
+}
