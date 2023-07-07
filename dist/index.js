@@ -6728,6 +6728,8 @@ var external_path_ = __nccwpck_require__(1017);
 var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
+var tool_cache = __nccwpck_require__(7784);
 // EXTERNAL MODULE: ./node_modules/@actions/http-client/lib/index.js
 var lib = __nccwpck_require__(6255);
 ;// CONCATENATED MODULE: ./lib/versions.js
@@ -6792,8 +6794,6 @@ async function fetchLatestTag(repo) {
   return tag;
 }
 
-// EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
-var tool_cache = __nccwpck_require__(7784);
 // EXTERNAL MODULE: external "os"
 var external_os_ = __nccwpck_require__(2037);
 var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
@@ -6862,6 +6862,8 @@ async function downloadScarb(repo, version) {
 
 
 
+
+
 const REPO = "software-mansion/scarb";
 
 async function main() {
@@ -6871,9 +6873,15 @@ async function main() {
     core.info(`Setting up Scarb v${scarbVersion}`);
     core.setOutput("scarb-version", scarbVersion);
 
-    const download = await downloadScarb(REPO, scarbVersion);
+    const triplet = getOsTriplet();
 
-    core.addPath(external_path_default().join(download, "bin"));
+    let installPath = tool_cache.find("scarb", scarbVersion, triplet);
+    if (!installPath) {
+      const download = await downloadScarb(REPO, scarbVersion);
+      installPath = await tool_cache.cacheDir(download, "scarb", scarbVersion, triplet);
+    }
+
+    core.addPath(external_path_default().join(installPath, "bin"));
   } catch (e) {
     core.setFailed(e);
   }
