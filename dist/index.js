@@ -6754,44 +6754,46 @@ async function determineVersion(repo, versionInput) {
   return versionInput;
 }
 
-async function fetchLatestTag(repo) {
+function fetchLatestTag(repo) {
   // Note: Asking GitHub API for latest release information is the simplest solution here, but has one major drawback:
   // it tends to trigger rate limit errors when run on GitHub actions hosted runners. This method performs requests
   // against GitHub website, which does not rate limit so aggressively. We also never ask for nor download response
   // body, which means that this technique should be theoretically much faster.
+  return core.group(
+    "Getting information about latest Scarb release from GitHub",
+    async () => {
+      const http = new lib.HttpClient("software-mansion/setup-scarb", undefined, {
+        allowRedirects: false,
+      });
 
-  core.debug("Getting information about latest Scarb release tag from GitHub");
+      const requestUrl = `https://github.com/${repo}/releases/latest`;
+      core.debug(`HEAD ${requestUrl}`);
+      const res = await http.head(requestUrl);
 
-  const http = new lib.HttpClient("software-mansion/setup-scarb", undefined, {
-    allowRedirects: false,
-  });
+      if (res.message.statusCode < 300 || res.message.statusCode >= 400) {
+        throw new Error(
+          `failed to determine latest version: expected releases request to redirect, instead got http status: ${res.message.statusCode}`,
+        );
+      }
 
-  const requestUrl = `https://github.com/${repo}/releases/latest`;
-  core.debug(`HEAD ${requestUrl}`);
-  const res = await http.head(requestUrl);
+      const location = res.message.headers.location;
+      core.debug(`Location: ${location}`);
+      if (!location) {
+        throw new Error(
+          `failed to determine latest version: releases request response misses 'location' header`,
+        );
+      }
 
-  if (res.message.statusCode < 300 || res.message.statusCode >= 400) {
-    throw new Error(
-      `failed to determine latest version: expected releases request to redirect, instead got http status: ${res.message.statusCode}`,
-    );
-  }
+      const tag = location.replace(/.*\/tag\/(v.*)(?:\/.*)?/, "$1");
+      if (!tag) {
+        throw new Error(
+          `failed to determine latest version: could not extract tag from release url`,
+        );
+      }
 
-  const location = res.message.headers.location;
-  core.debug(`Location: ${location}`);
-  if (!location) {
-    throw new Error(
-      `failed to determine latest version: releases request response misses 'location' header`,
-    );
-  }
-
-  const tag = location.replace(/.*\/tag\/(v.*)(?:\/.*)?/, "$1");
-  if (!tag) {
-    throw new Error(
-      `failed to determine latest version: could not extract tag from release url`,
-    );
-  }
-
-  return tag;
+      return tag;
+    },
+  );
 }
 
 // EXTERNAL MODULE: external "os"
@@ -6839,21 +6841,19 @@ function getOsPlatform() {
 
 
 async function downloadScarb(repo, version) {
-  return core.group(`Downloading Scarb v${version}`, async () => {
-    const triplet = getOsTriplet();
-    const basename = `scarb-v${version}-${triplet}`;
-    const extension = triplet.includes("-windows-") ? "zip" : "tar.gz";
-    const url = `https://github.com/${repo}/releases/download/v${version}/${basename}.${extension}`;
+  const triplet = getOsTriplet();
+  const basename = `scarb-v${version}-${triplet}`;
+  const extension = triplet.includes("-windows-") ? "zip" : "tar.gz";
+  const url = `https://github.com/${repo}/releases/download/v${version}/${basename}.${extension}`;
 
-    const pathToTarball = await tool_cache.downloadTool(url);
+  const pathToTarball = await tool_cache.downloadTool(url);
 
-    const extract = url.endsWith(".zip") ? tool_cache.extractZip : tool_cache.extractTar;
-    const extractedPath = await extract(pathToTarball);
-    const pathToCli = external_path_default().join(extractedPath, basename);
+  const extract = url.endsWith(".zip") ? tool_cache.extractZip : tool_cache.extractTar;
+  const extractedPath = await extract(pathToTarball);
+  const pathToCli = external_path_default().join(extractedPath, basename);
 
-    core.debug(`Extracted to ${pathToCli}`);
-    return pathToCli;
-  });
+  core.debug(`Extracted to ${pathToCli}`);
+  return pathToCli;
 }
 
 ;// CONCATENATED MODULE: ./lib/main.js
@@ -6870,18 +6870,24 @@ async function main() {
   try {
     const scarbVersionInput = core.getInput("scarb-version");
     const scarbVersion = await determineVersion(REPO, scarbVersionInput);
-    core.info(`Setting up Scarb v${scarbVersion}`);
-    core.setOutput("scarb-version", scarbVersion);
 
     const triplet = getOsTriplet();
 
-    let installPath = tool_cache.find("scarb", scarbVersion, triplet);
-    if (!installPath) {
-      const download = await downloadScarb(REPO, scarbVersion);
-      installPath = await tool_cache.cacheDir(download, "scarb", scarbVersion, triplet);
-    }
+    await core.group(`Setting up Scarb v${scarbVersion}`, async () => {
+      let installPath = tool_cache.find("scarb", scarbVersion, triplet);
+      if (!installPath) {
+        const download = await downloadScarb(REPO, scarbVersion);
+        installPath = await tool_cache.cacheDir(
+          download,
+          "scarb",
+          scarbVersion,
+          triplet,
+        );
+      }
 
-    core.addPath(external_path_default().join(installPath, "bin"));
+      core.setOutput("scarb-version", scarbVersion);
+      core.addPath(external_path_default().join(installPath, "bin"));
+    });
   } catch (e) {
     core.setFailed(e);
   }
