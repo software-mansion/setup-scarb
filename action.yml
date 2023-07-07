@@ -11,6 +11,8 @@ inputs:
 outputs:
   scarb-prefix:
     description: The prefix of the installed Scarb
+  scarb-version:
+    description: The version of the installed Scarb
 runs:
   using: "node16"
   main: "dist/index.js"
