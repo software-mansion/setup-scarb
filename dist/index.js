@@ -6874,10 +6874,10 @@ async function main() {
     const triplet = getOsTriplet();
 
     await core.group(`Setting up Scarb v${scarbVersion}`, async () => {
-      let installPath = tool_cache.find("scarb", scarbVersion, triplet);
-      if (!installPath) {
+      let scarbPrefix = tool_cache.find("scarb", scarbVersion, triplet);
+      if (!scarbPrefix) {
         const download = await downloadScarb(REPO, scarbVersion);
-        installPath = await tool_cache.cacheDir(
+        scarbPrefix = await tool_cache.cacheDir(
           download,
           "scarb",
           scarbVersion,
@@ -6885,8 +6885,9 @@ async function main() {
         );
       }
 
+      core.setOutput("scarb-prefix", scarbPrefix);
       core.setOutput("scarb-version", scarbVersion);
-      core.addPath(external_path_default().join(installPath, "bin"));
+      core.addPath(external_path_default().join(scarbPrefix, "bin"));
     });
   } catch (e) {
     core.setFailed(e);
