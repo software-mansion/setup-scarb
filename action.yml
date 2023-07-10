@@ -1,9 +1,9 @@
-name: Set up Scarb
+name: Setup Scarb
 description: Sets up Scarb in your GitHub Actions workflow
 author: Software Mansion
 branding:
   color: blue
-  icon: download
+  icon: activity
 inputs:
   scarb-version:
     description: Scarb version to use
