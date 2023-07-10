@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "0.4.0"
+          scarb-version: "0.5.1"
       - run: scarb fmt --check
       - run: scarb test
 ```
