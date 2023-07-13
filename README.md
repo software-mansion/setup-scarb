@@ -10,7 +10,7 @@ on:
   push:
   pull_request:
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
