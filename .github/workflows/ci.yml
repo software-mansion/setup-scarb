@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: test ${{ matrix.os }} scarb:${{ matrix.scarb-version }}
+    name: test ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -17,9 +17,6 @@ jobs:
           - ubuntu-latest
           - macos-latest
           - windows-latest
-        scarb-version:
-          - "0.4.1"
-          - latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -28,17 +25,23 @@ jobs:
         uses: ./
       - run: scarb --version
 
-      - name: "Setup Scarb with `scarb-version: ${{ matrix.scarb-version }}`"
+      - name: "Setup Scarb with `scarb-version: 0.4.1`"
         uses: ./
         with:
-          scarb-version: ${{ matrix.scarb-version }}
+          scarb-version: 0.4.1
+      - run: scarb --version | grep "scarb 0.4.1"
+
+      - name: "Setup Scarb with `scarb-version: latest`"
+        uses: ./
+        with:
+          scarb-version: latest
       - run: scarb --version
 
       - name: "Create .tool-versions file"
         run: echo "scarb 0.5.0" >> .tool-versions
       - name: "Setup Scarb using `.tool-versions` file"
         uses: ./
-      - run: scarb --version
+      - run: scarb --version | grep "scarb 0.5.0"
 
   lint:
     runs-on: ubuntu-latest
