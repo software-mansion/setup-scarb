@@ -21,9 +21,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: "Fetch latest Scarb version from GitHub releases"
+        id: version
+        run: |
+          echo -n "LATEST_VERSION=$(curl -s https://github.com/software-mansion/scarb/releases/latest --head \
+          | grep location \
+          | sed -E "s/^.*v([0-9.-]+).*/\1/")" >> "$GITHUB_OUTPUT"
+
       - name: "Setup Scarb without `scarb-version`"
         uses: ./
-      - run: scarb --version
+      - run: scarb --version | grep "scarb ${{ steps.version.outputs.LATEST_VERSION }}"
 
       - name: "Setup Scarb with `scarb-version: 0.4.1`"
         uses: ./
@@ -35,7 +42,7 @@ jobs:
         uses: ./
         with:
           scarb-version: latest
-      - run: scarb --version
+      - run: scarb --version | grep "scarb ${{ steps.version.outputs.LATEST_VERSION }}"
 
       - name: "Create .tool-versions file"
         run: echo "scarb 0.5.0" >> .tool-versions
