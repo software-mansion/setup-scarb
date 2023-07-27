@@ -23,9 +23,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: ./
+
+      - name: "Setup Scarb without `scarb-version`"
+        uses: ./
+      - run: scarb --version
+
+      - name: "Setup Scarb with `scarb-version: ${{ matrix.scarb-version }}`"
+        uses: ./
         with:
           scarb-version: ${{ matrix.scarb-version }}
+      - run: scarb --version
+
+      - name: "Create .tool-versions file"
+        run: echo "scarb 0.5.0" >> .tool-versions
+      - name: "Setup Scarb using `.tool-versions` file"
+        uses: ./
       - run: scarb --version
 
   lint:
