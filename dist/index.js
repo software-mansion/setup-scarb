@@ -6730,9 +6730,9 @@ var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
 var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
 var tool_cache = __nccwpck_require__(7784);
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(7147);
-var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
+;// CONCATENATED MODULE: external "fs/promises"
+const promises_namespaceObject = require("fs/promises");
+var promises_default = /*#__PURE__*/__nccwpck_require__.n(promises_namespaceObject);
 // EXTERNAL MODULE: ./node_modules/@actions/http-client/lib/index.js
 var lib = __nccwpck_require__(6255);
 ;// CONCATENATED MODULE: ./lib/versions.js
@@ -6743,13 +6743,13 @@ var lib = __nccwpck_require__(6255);
 async function determineVersion(repo, versionInput) {
   versionInput = versionInput?.trim();
 
-  if (versionInput === "latest") {
-    versionInput = await fetchLatestTag(repo);
+  if (!versionInput) {
+    let toolVersion = await getVersionFromToolVersionsFile();
+    versionInput = toolVersion ?? "latest";
   }
 
-  if (!versionInput) {
-    let toolVersion = getVersionFromToolVersionsFile();
-    versionInput = toolVersion ?? (await fetchLatestTag(repo));
+  if (versionInput === "latest") {
+    versionInput = await fetchLatestTag(repo);
   }
 
   return versionInput.startsWith("v")
@@ -6799,16 +6799,14 @@ function fetchLatestTag(repo) {
   );
 }
 
-function getVersionFromToolVersionsFile() {
-  const fileName = ".tool-versions";
-  if (!external_fs_default().existsSync(fileName)) return;
-
-  const toolVersions = external_fs_default().readFileSync(fileName, "utf-8").split("\n");
-  const scarbVersionInfo = toolVersions.find((tool) => tool.match(/^scarb/));
-  if (!scarbVersionInfo) return;
-
-  const [, version] = scarbVersionInfo.match(/scarb ([\w.-]+)/);
-  return version;
+async function getVersionFromToolVersionsFile() {
+  try {
+    return (await promises_default().readFile(".tool-versions", "utf-8")).match(
+      /^scarb ([\w.-]+)/m,
+    )?.[1];
+  } catch (e) {
+    return;
+  }
 }
 
 // EXTERNAL MODULE: external "os"
