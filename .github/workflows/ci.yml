@@ -23,12 +23,12 @@ jobs:
 
       - name: "Fetch latest Scarb version from GitHub releases"
         id: version
+        shell: pwsh
         run: |
-          LATEST_VERSION="$(curl -s https://github.com/software-mansion/scarb/releases/latest --head \
-          | grep location \
-          | sed -E "s/^.*v([0-9.-]+).*/\1/")" 
-          echo "Latest Scarb version is v$LATEST_VERSION"
-          echo -n "LATEST_VERSION=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+          $location = (Invoke-WebRequest -Uri "https://github.com/software-mansion/scarb/releases/latest" -Method Head -MaximumRedirection 0 -SkipHttpErrorCheck -ErrorAction Ignore).Headers.Location
+          $latest_version = ($location -replace '^.*/v','')
+          echo "Latest Scarb version found is $latest_version"
+          echo "LATEST_VERSION=$latest_version" >> $env:GITHUB_OUTPUT
 
       - name: "Setup Scarb without `scarb-version`"
         uses: ./
