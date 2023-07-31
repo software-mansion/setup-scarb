@@ -23,7 +23,7 @@ jobs:
 
 ## Inputs
 
-- `scarb-version` - **Optional**. A string stating an explicit Scarb version to use, or `"latest"`. Defaults to `"latest"`.
+- `scarb-version` - **Optional**. A string stating an explicit Scarb version to use, or `"latest"`. When not specified, the `.tool-versions` file will be read to resolve Scarb version, and in case it is not present the latest version will be used.
 
 ## Outputs
 
