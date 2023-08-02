@@ -4,7 +4,7 @@
   "description": "Sets up Scarb in your GitHub Actions workflow.",
   "main": "index.js",
   "scripts": {
-    "build": "ncc build index.js -o dist --source-map --license licenses.txt",
+    "build": "ncc build index.js -o dist/setup --source-map --license licenses.txt && ncc build lib/cache-save.js -o dist/cache-save --source-map --license licenses.txt",
     "lint": "npm run fmt:check",
     "fmt:check": "prettier -c .",
     "fmt": "prettier -w .",
@@ -21,7 +21,10 @@
   },
   "homepage": "https://github.com/software-mansion/setup-scarb#readme",
   "dependencies": {
+    "@actions/cache": "^3.2.1",
     "@actions/core": "^1.10.0",
+    "@actions/exec": "^1.1.1",
+    "@actions/glob": "^0.4.0",
     "@actions/http-client": "^2.1.0",
     "@actions/tool-cache": "^2.0.1"
   },
