@@ -1,6 +1,6 @@
 # Install Scarb
 
-Sets up [Scarb] in your GitHub Actions workflow.
+Sets up [Scarb] in your GitHub Actions workflow supporting caching out of the box.
 
 ## Example workflow
 
