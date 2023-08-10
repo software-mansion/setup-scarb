@@ -60397,11 +60397,12 @@ function fetchLatestTag(repo) {
 
 async function getVersionFromToolVersionsFile() {
   try {
-    return (await promises_default().readFile(".tool-versions", "utf-8")).match(
-      /^scarb ([\w.-]+)/m,
-    )?.[1];
+    const toolVersions = await promises_default().readFile(".tool-versions", {
+      encoding: "utf-8",
+    });
+    return toolVersions.match(/^scarb ([\w.-]+)/m)?.[1];
   } catch (e) {
-    return;
+    return undefined;
   }
 }
 
