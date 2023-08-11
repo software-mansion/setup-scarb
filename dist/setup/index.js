@@ -60534,9 +60534,9 @@ function getCacheDirectory() {
     case "linux":
       return external_path_default().join(home, ".cache/scarb");
     case "darwin":
-      return external_path_default().join(home, `Library/Caches/com.swmansion.Scarb`);
+      return external_path_default().join(home, `Library/Caches/com.swmansion.scarb`);
     case "win32":
-      return external_path_default().join(process.env.APPDATA, "swmansion/Scarb/config");
+      return external_path_default().join(process.env.APPDATA, "swmansion/scarb/config");
     default:
       throw new Error(`caching is not available on this platform: ${platform}`);
   }
