@@ -60538,7 +60538,7 @@ function getCacheDirectory() {
     case "win32":
       return external_path_default().join(process.env.APPDATA, "swmansion/Scarb/config");
     default:
-      throw new Error(`Caching not available for ${platform} platform.`);
+      throw new Error(`caching is not available on this platform: ${platform}`);
   }
 }
 
@@ -60548,7 +60548,7 @@ async function getCacheKey() {
 
   if (!fileHash) {
     throw new Error(
-      "Unable to hash Scarb.toml file, cannot cache dependencies.",
+      "failed to cache dependencies: unable to hash Scarb.toml file",
     );
   }
 
@@ -60559,7 +60559,9 @@ async function getScarbManifestPath() {
   const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
 
   if (exitCode > 0) {
-    throw new Error("Unable to resolve Scarb.toml path.");
+    throw new Error(
+      "failed to find Scarb.toml: command `scarb manifest-path` failed",
+    );
   }
 
   return stdout.trim();
