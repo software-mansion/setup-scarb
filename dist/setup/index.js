@@ -60329,6 +60329,8 @@ var tool_cache = __nccwpck_require__(7784);
 ;// CONCATENATED MODULE: external "fs/promises"
 const promises_namespaceObject = require("fs/promises");
 var promises_default = /*#__PURE__*/__nccwpck_require__.n(promises_namespaceObject);
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/http-client/lib/index.js
 var lib = __nccwpck_require__(6255);
 ;// CONCATENATED MODULE: ./lib/versions.js
@@ -60336,21 +60338,46 @@ var lib = __nccwpck_require__(6255);
 
 
 
-async function determineVersion(repo, versionInput) {
-  versionInput = versionInput?.trim();
 
-  if (!versionInput) {
+async function determineVersion(version, { repo, nightliesRepo }) {
+  version = version?.trim();
+
+  if (!version) {
     let toolVersion = await getVersionFromToolVersionsFile();
-    versionInput = toolVersion ?? "latest";
+    version = toolVersion ?? "latest";
   }
 
-  if (versionInput === "latest") {
-    versionInput = await fetchLatestTag(repo);
+  if (version === "latest") {
+    version = await fetchLatestTag(repo);
   }
 
-  return versionInput.startsWith("v")
-    ? versionInput.substring(1)
-    : versionInput;
+  if (version === "nightly") {
+    version = await fetchLatestTag(nightliesRepo);
+  }
+
+  if (version.startsWith("v")) {
+    version = version.substring(1);
+  }
+
+  return {
+    repo: version.startsWith("nightly-") ? nightliesRepo : repo,
+    version,
+  };
+}
+
+function versionWithPrefix(version) {
+  return /^\d/.test(version) ? `v${version}` : version;
+}
+
+async function getFullVersionFromScarb() {
+  const { stdout } = await exec.getExecOutput(`scarb -V`);
+  const match = stdout.match(/^scarb ([^ ]+)/);
+  if (!match) {
+    throw new Error(
+      `unable to determine Scarb version from 'scarb -V' output: ${stdout}`,
+    );
+  }
+  return match[1];
 }
 
 function fetchLatestTag(repo) {
@@ -60383,7 +60410,7 @@ function fetchLatestTag(repo) {
         );
       }
 
-      const tag = location.replace(/.*\/tag\/(v.*)(?:\/.*)?/, "$1");
+      const tag = location.replace(/.*\/tag\/(.*)(?:\/.*)?/, "$1");
       if (!tag) {
         throw new Error(
           `failed to determine latest version: could not extract tag from release url`,
@@ -60397,11 +60424,12 @@ function fetchLatestTag(repo) {
 
 async function getVersionFromToolVersionsFile() {
   try {
-    return (await promises_default().readFile(".tool-versions", "utf-8")).match(
-      /^scarb ([\w.-]+)/m,
-    )?.[1];
+    const toolVersions = await promises_default().readFile(".tool-versions", {
+      encoding: "utf-8",
+    });
+    return toolVersions.match(/^scarb ([\w.-]+)/m)?.[1];
   } catch (e) {
-    return;
+    return undefined;
   }
 }
 
@@ -60449,26 +60477,41 @@ function getOsPlatform() {
 
 
 
+
+
 async function downloadScarb(repo, version) {
   const triplet = getOsTriplet();
-  const basename = `scarb-v${version}-${triplet}`;
+  const tag = versionWithPrefix(version);
+  const basename = `scarb-${tag}-${triplet}`;
   const extension = triplet.includes("-windows-") ? "zip" : "tar.gz";
-  const url = `https://github.com/${repo}/releases/download/v${version}/${basename}.${extension}`;
+  const url = `https://github.com/${repo}/releases/download/${tag}/${basename}.${extension}`;
 
+  core.info(`Downloading Scarb from ${url}`);
   const pathToTarball = await tool_cache.downloadTool(url);
 
   const extract = url.endsWith(".zip") ? tool_cache.extractZip : tool_cache.extractTar;
   const extractedPath = await extract(pathToTarball);
-  const pathToCli = external_path_default().join(extractedPath, basename);
+
+  const pathToCli = await findScarbDir(extractedPath);
 
   core.debug(`Extracted to ${pathToCli}`);
   return pathToCli;
 }
 
+async function findScarbDir(extractedPath) {
+  for (const dirent of await promises_default().readdir(extractedPath, {
+    withFileTypes: true,
+  })) {
+    if (dirent.isDirectory() && dirent.name.startsWith("scarb-")) {
+      return external_path_default().join(extractedPath, dirent.name);
+    }
+  }
+
+  throw new Error(`could not find Scarb directory in ${extractedPath}`);
+}
+
 // EXTERNAL MODULE: ./node_modules/@actions/cache/lib/cache.js
 var cache = __nccwpck_require__(7799);
-// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
-var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/glob/lib/glob.js
 var glob = __nccwpck_require__(8090);
 ;// CONCATENATED MODULE: ./lib/cache-utils.js
@@ -60558,31 +60601,39 @@ async function restoreCache() {
 
 
 
-const REPO = "software-mansion/scarb";
-
 async function main() {
   try {
     const scarbVersionInput = core.getInput("scarb-version");
-    const scarbVersion = await determineVersion(REPO, scarbVersionInput);
+    const { repo: scarbRepo, version: scarbVersion } = await determineVersion(
+      scarbVersionInput,
+      {
+        repo: "software-mansion/scarb",
+        nightliesRepo: "software-mansion/scarb-nightlies",
+      },
+    );
 
     const triplet = getOsTriplet();
 
-    await core.group(`Setting up Scarb v${scarbVersion}`, async () => {
-      let scarbPrefix = tool_cache.find("scarb", scarbVersion, triplet);
-      if (!scarbPrefix) {
-        const download = await downloadScarb(REPO, scarbVersion);
-        scarbPrefix = await tool_cache.cacheDir(
-          download,
-          "scarb",
-          scarbVersion,
-          triplet,
-        );
-      }
+    await core.group(
+      `Setting up Scarb ${versionWithPrefix(scarbVersion)}`,
+      async () => {
+        let scarbPrefix = tool_cache.find("scarb", scarbVersion, triplet);
+        if (!scarbPrefix) {
+          const download = await downloadScarb(scarbRepo, scarbVersion);
+          scarbPrefix = await tool_cache.cacheDir(
+            download,
+            "scarb",
+            scarbVersion,
+            triplet,
+          );
+        }
 
-      core.setOutput("scarb-prefix", scarbPrefix);
-      core.setOutput("scarb-version", scarbVersion);
-      core.addPath(external_path_default().join(scarbPrefix, "bin"));
-    });
+        core.setOutput("scarb-prefix", scarbPrefix);
+        core.addPath(external_path_default().join(scarbPrefix, "bin"));
+      },
+    );
+
+    core.setOutput("scarb-version", await getFullVersionFromScarb());
 
     await restoreCache().catch((e) => {
       core.error(

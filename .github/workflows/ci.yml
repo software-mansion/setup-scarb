@@ -30,6 +30,11 @@ jobs:
           echo "Latest Scarb version found is $latest_version"
           echo "LATEST_VERSION=$latest_version" >> $env:GITHUB_OUTPUT
 
+          $location = (Invoke-WebRequest -Uri "https://github.com/software-mansion/scarb-nightlies/releases/latest" -Method Head -MaximumRedirection 0 -SkipHttpErrorCheck -ErrorAction Ignore).Headers.Location
+          $latest_version = ($location -replace '^.*/nightly-','nightly-')
+          echo "Latest Scarb nightly version found is $latest_version"
+          echo "LATEST_NIGHTLY_VERSION=$latest_version" >> $env:GITHUB_OUTPUT
+
       - name: "Setup Scarb without `scarb-version`"
         uses: ./
       - run: scarb --version | grep "scarb ${{ steps.version.outputs.LATEST_VERSION }}"
@@ -45,6 +50,18 @@ jobs:
         with:
           scarb-version: latest
       - run: scarb --version | grep "scarb ${{ steps.version.outputs.LATEST_VERSION }}"
+
+      - name: "Setup Scarb with `scarb-version: nightly-2023-08-10`"
+        uses: ./
+        with:
+          scarb-version: nightly-2023-08-10
+      - run: scarb --version | grep "scarb v0.6.0+nightly-2023-08-10"
+
+      - name: "Setup Scarb with `scarb-version: nightly`"
+        uses: ./
+        with:
+          scarb-version: nightly
+      - run: scarb --version | grep "${{ steps.version.outputs.LATEST_NIGHTLY_VERSION }}"
 
       - name: "Create .tool-versions file"
         run: echo "scarb 0.5.0" >> .tool-versions
