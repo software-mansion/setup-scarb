@@ -60568,12 +60568,23 @@ var glob = __nccwpck_require__(8090);
 
 
 
+
 const State = {
   CachePrimaryKey: "primary_key",
   CacheMatchedKey: "matched_key",
 };
 
 async function getCacheDirectory() {
+  // NOTE: The `cache path` command was introduced in Scarb 0.7.0. We do not want to break compatibility with older
+  //   versions yet, so we fall back to a well-known cache path if this command is not available.
+  try {
+    if (await isScarbMissingCachePathCommand()) {
+      return wellKnownCachePath();
+    }
+  } catch (e) {
+    core.debug(`scarb cache path fallback failed: ${e.message}`);
+  }
+
   const { stdout, exitCode } = await exec.getExecOutput("scarb cache path");
 
   if (exitCode > 0) {
@@ -60583,6 +60594,27 @@ async function getCacheDirectory() {
   }
 
   return stdout.trim();
+}
+
+async function isScarbMissingCachePathCommand() {
+  const { stdout } = await exec.getExecOutput("scarb -V");
+  return stdout.match(/^scarb 0\.[0-6]\./) != null;
+}
+
+function wellKnownCachePath() {
+  const platform = external_os_default().platform();
+  const home = process.env.HOME;
+
+  switch (platform) {
+    case "linux":
+      return external_path_default().join(home, ".cache/scarb");
+    case "darwin":
+      return external_path_default().join(home, `Library/Caches/com.swmansion.scarb`);
+    case "win32":
+      return external_path_default().join(process.env.APPDATA, "swmansion/scarb/config");
+    default:
+      throw new Error(`caching is not available on this platform: ${platform}`);
+  }
 }
 
 async function getCacheKey() {
