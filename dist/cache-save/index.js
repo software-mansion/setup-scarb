@@ -59333,6 +59333,35 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
@@ -59366,9 +59395,12 @@ var lib_exec = __nccwpck_require__(1514);
 var lib_glob = __nccwpck_require__(8090);
 // EXTERNAL MODULE: external "os"
 var external_os_ = __nccwpck_require__(2037);
+var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 // EXTERNAL MODULE: external "path"
 var external_path_ = __nccwpck_require__(1017);
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
 ;// CONCATENATED MODULE: ./lib/cache-utils.js
+
 
 
 
@@ -59381,6 +59413,16 @@ const State = {
 };
 
 async function getCacheDirectory() {
+  // NOTE: The `cache path` command was introduced in Scarb 0.7.0. We do not want to break compatibility with older
+  //   versions yet, so we fall back to a well-known cache path if this command is not available.
+  try {
+    if (await isScarbMissingCachePathCommand()) {
+      return wellKnownCachePath();
+    }
+  } catch (e) {
+    core.debug(`scarb cache path fallback failed: ${e.message}`);
+  }
+
   const { stdout, exitCode } = await lib_exec.getExecOutput("scarb cache path");
 
   if (exitCode > 0) {
@@ -59390,6 +59432,27 @@ async function getCacheDirectory() {
   }
 
   return stdout.trim();
+}
+
+async function isScarbMissingCachePathCommand() {
+  const { stdout } = await lib_exec.getExecOutput("scarb -V");
+  return stdout.match(/^scarb 0\.[0-6]\./) != null;
+}
+
+function wellKnownCachePath() {
+  const platform = external_os_default().platform();
+  const home = process.env.HOME;
+
+  switch (platform) {
+    case "linux":
+      return external_path_default().join(home, ".cache/scarb");
+    case "darwin":
+      return external_path_default().join(home, `Library/Caches/com.swmansion.scarb`);
+    case "win32":
+      return external_path_default().join(process.env.APPDATA, "swmansion/scarb/config");
+    default:
+      throw new Error(`caching is not available on this platform: ${platform}`);
+  }
 }
 
 async function getCacheKey() {

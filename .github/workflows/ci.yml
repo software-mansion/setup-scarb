@@ -39,6 +39,7 @@ jobs:
         uses: ./
       - run: scarb --version | grep "scarb ${{ steps.version.outputs.LATEST_VERSION }}"
 
+      # NOTE: This is Scarb <0.7.0, thus this test checks the `cache path` fallback logic.
       - name: "Setup Scarb with `scarb-version: 0.4.1`"
         uses: ./
         with:
@@ -64,10 +65,10 @@ jobs:
       - run: scarb --version | grep "${{ steps.version.outputs.LATEST_NIGHTLY_VERSION }}"
 
       - name: "Create .tool-versions file"
-        run: echo "scarb 0.5.0" >> .tool-versions
+        run: echo "scarb 0.7.0" >> .tool-versions
       - name: "Setup Scarb using `.tool-versions` file"
         uses: ./
-      - run: scarb --version | grep "scarb 0.5.0"
+      - run: scarb --version | grep "scarb 0.7.0"
 
   lint:
     runs-on: ubuntu-latest
