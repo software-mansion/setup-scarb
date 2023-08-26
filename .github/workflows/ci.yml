@@ -79,6 +79,14 @@ jobs:
         uses: ./
       - run: scarb --version | grep "scarb 0.7.0"
 
+      - name: "Create .tool-versions file in subfolder"
+        run: mkdir ./tmp && echo "scarb 0.7.0" >> ./tmp/.tool-versions
+      - name: "Setup Scarb using `.tool-versions` file in subfolder"
+        uses: ./
+        with:
+          tool-versions: ./tmp/
+      - run: scarb --version | grep "scarb 0.7.0"
+
   lint:
     runs-on: ubuntu-latest
     steps:
