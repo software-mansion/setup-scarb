@@ -60386,8 +60386,28 @@ var lib = __nccwpck_require__(6255);
 
 
 
-async function determineVersion(version, { repo, nightliesRepo }) {
+
+async function determineVersion(
+  version,
+  toolVersionsPath,
+  { repo, nightliesRepo },
+) {
   version = version?.trim();
+
+  if (version && toolVersionsPath) {
+    throw new Error(
+      "the `scarb-version` and `tool-versions` inputs cannot be used simultaneously",
+    );
+  }
+
+  if (toolVersionsPath) {
+    let toolVersion = await getVersionFromToolVersionsFile(toolVersionsPath);
+
+    if (!toolVersion) {
+      throw new Error(`failed to read Scarb version from: ${toolVersionsPath}`);
+    }
+    version = toolVersion;
+  }
 
   if (!version) {
     let toolVersion = await getVersionFromToolVersionsFile();
@@ -60469,9 +60489,10 @@ function fetchLatestTag(repo) {
   );
 }
 
-async function getVersionFromToolVersionsFile() {
+async function getVersionFromToolVersionsFile(toolVersionsPath) {
   try {
-    const toolVersions = await promises_default().readFile(".tool-versions", {
+    toolVersionsPath = toolVersionsPath || ".tool-versions";
+    const toolVersions = await promises_default().readFile(toolVersionsPath, {
       encoding: "utf-8",
     });
     return toolVersions.match(/^scarb ([\w.-]+)/m)?.[1];
@@ -60681,8 +60702,11 @@ async function restoreCache() {
 async function main() {
   try {
     const scarbVersionInput = core.getInput("scarb-version");
+    const toolVersionsPathInput = core.getInput("tool-versions");
+
     const { repo: scarbRepo, version: scarbVersion } = await determineVersion(
       scarbVersionInput,
+      toolVersionsPathInput,
       {
         repo: "software-mansion/scarb",
         nightliesRepo: "software-mansion/scarb-nightlies",
