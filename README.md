@@ -30,6 +30,9 @@ jobs:
   - `"nightly"` to download latest nightly version.
   - Empty/not specified: the `.tool-versions` file will be read to resolve Scarb version, and in case it is not
     present the latest stable version will be used.
+- `tool-versions` - **Optional**. String.
+  - Stating a relative or absolute path to the `.tool-versions` file.
+  - Should be used only if `scarb-version` is not specified.
 
 ## Outputs
 
