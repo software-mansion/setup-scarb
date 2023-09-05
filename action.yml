@@ -8,6 +8,9 @@ inputs:
   scarb-version:
     description: Scarb version to use
     required: false
+  tool-versions:
+    description: Path to .tool-versions file
+    required: false
 outputs:
   scarb-prefix:
     description: The prefix of the installed Scarb
