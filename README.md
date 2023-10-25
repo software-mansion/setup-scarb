@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "0.7.0"
+          scarb-version: "2.3.0"
       - run: scarb fmt --check
       - run: scarb test
 ```
@@ -24,7 +24,7 @@ jobs:
 ## Inputs
 
 - `scarb-version` - **Optional**. String, either:
-  - Stating an explicit Scarb version to use, for example `"0.7.0"`.
+  - Stating an explicit Scarb version to use, for example `"2.3.0"`.
   - Stating an explicit nightly tag to use, for example `"nightly-2023-08-24"`.
   - `"latest"` to download latest stable version.
   - `"nightly"` to download latest nightly version.
