@@ -59473,13 +59473,13 @@ async function getScarbLockfilePath() {
 
   if (exitCode > 0) {
     throw new Error(
-        "failed to find Scarb.toml: command `scarb manifest-path` failed",
+      "failed to find Scarb.toml: command `scarb manifest-path` failed",
     );
   }
 
   const lockfilePath = stdout.trim().slice(0, -4) + "lock";
   await exec.getExecOutput("test -f " + lockfilePath).catch((_) => {
-    throw new Error("failed to find Scarb.lock")
+    throw new Error("failed to find Scarb.lock");
   });
 
   return lockfilePath;
@@ -59498,8 +59498,10 @@ async function saveCache() {
 
     if (primaryKey !== matchedKey) {
       await cache.saveCache([await getCacheDirectory()], primaryKey);
+    } else if (primaryKey === "" && matchedKey === "") {
+      core.info(`No cache to validate from`);
     } else {
-      core.info(`Cache hit occurred or no cache found, not saving cache.`);
+      core.info(`Cache hit occurred, not saving cache.`);
     }
   } catch (e) {
     core.error(e);
