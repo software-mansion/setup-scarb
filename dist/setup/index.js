@@ -60640,27 +60640,32 @@ function wellKnownCachePath() {
 
 async function getCacheKey() {
   const platform = process.env.RUNNER_OS;
-  const fileHash = await glob.hashFiles(await getScarbManifestPath());
+  const fileHash = await glob.hashFiles(await getScarbLockfilePath());
 
   if (!fileHash) {
     throw new Error(
-      "failed to cache dependencies: unable to hash Scarb.toml file",
+      "failed to cache dependencies: unable to hash Scarb.lock file",
     );
   }
 
   return `scarb-cache-${platform}-${fileHash}`.toLowerCase();
 }
 
-async function getScarbManifestPath() {
+async function getScarbLockfilePath() {
   const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
 
   if (exitCode > 0) {
     throw new Error(
-      "failed to find Scarb.toml: command `scarb manifest-path` failed",
+        "failed to find Scarb.toml: command `scarb manifest-path` failed",
     );
   }
 
-  return stdout.trim();
+  const lockfilePath = stdout.trim().slice(0, -4) + "lock";
+  await exec.getExecOutput("test -f " + lockfilePath).catch((_) => {
+    throw new Error("failed to find Scarb.lock")
+  });
+
+  return lockfilePath;
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-restore.js
