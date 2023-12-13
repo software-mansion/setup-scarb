@@ -59495,9 +59495,10 @@ async function getScarbLockfilePath() {
 async function saveCache() {
   try {
     const pwd = await lib_exec.getExecOutput("pwd");
-    core.info(pwd.stdout);
+    // core.info(pwd.stdout);
     const lsla = await lib_exec.getExecOutput("ls -la");
-    core.info(lsla.stdout);
+    const _ = await lib_exec.getExecOutput("ls -la ..");
+    // core.info(lsla.stdout);
     const primaryKey = core.getState(State.CachePrimaryKey);
     const matchedKey = core.getState(State.CacheMatchedKey);
 
