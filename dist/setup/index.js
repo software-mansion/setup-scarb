@@ -60660,7 +60660,10 @@ async function getScarbLockfilePath() {
   //       "failed to find Scarb.toml: command `scarb manifest-path` failed",
   //   );
   // }
-
+  core.info("pwd call");
+  await exec.exec("pwd");
+  core.info("after pwd call");
+  core.info("ENV GITHUB WORKSPACE: \'" + process.env.GITHUB_WORKSPACE + "\'")
   const lockfilePath = external_path_default().join(external_path_default().dirname(process.env.GITHUB_WORKSPACE), "Scarb.lock");
 
   await promises_default().access(external_path_default().join(lockfilePath, "Scarb.lock")).catch((_) => {
