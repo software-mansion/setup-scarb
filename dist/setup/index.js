@@ -60652,20 +60652,16 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
-  const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+  const globber = await glob.create("**/Scarb.lock");
+  const lockfiles = await globber.glob();
 
-  if (exitCode > 0) {
-    throw new Error(
-      "failed to find Scarb.toml: command `scarb manifest-path` failed",
-    );
+  if (lockfiles.length === 0) {
+    throw new Error("failed to find Scarb.lock");
   }
 
-  const lockfilePath = stdout.trim().slice(0, -4) + "lock";
-  await exec.getExecOutput("test -f " + lockfilePath).catch((_) => {
-    throw new Error("failed to find Scarb.lock");
-  });
-
-  return lockfilePath;
+  return lockfiles.reduce((prev, next) =>
+    prev.length < next.length ? prev : next,
+  );
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-restore.js

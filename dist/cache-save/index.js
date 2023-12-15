@@ -59390,7 +59390,7 @@ var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/cache/lib/cache.js
 var cache = __nccwpck_require__(7799);
 // EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
-var lib_exec = __nccwpck_require__(1514);
+var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/glob/lib/glob.js
 var lib_glob = __nccwpck_require__(8090);
 // EXTERNAL MODULE: external "os"
@@ -59423,7 +59423,7 @@ async function getCacheDirectory() {
     core.debug(`scarb cache path fallback failed: ${e.message}`);
   }
 
-  const { stdout, exitCode } = await lib_exec.getExecOutput("scarb cache path");
+  const { stdout, exitCode } = await exec.getExecOutput("scarb cache path");
 
   if (exitCode > 0) {
     throw new Error(
@@ -59435,7 +59435,7 @@ async function getCacheDirectory() {
 }
 
 async function isScarbMissingCachePathCommand() {
-  const { stdout } = await lib_exec.getExecOutput("scarb -V");
+  const { stdout } = await exec.getExecOutput("scarb -V");
   return stdout.match(/^scarb 0\.[0-6]\./) != null;
 }
 
@@ -59469,20 +59469,16 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
-  const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+  const globber = await glob.create("**/Scarb.lock");
+  const lockfiles = await globber.glob();
 
-  if (exitCode > 0) {
-    throw new Error(
-      "failed to find Scarb.toml: command `scarb manifest-path` failed",
-    );
+  if (lockfiles.length === 0) {
+    throw new Error("failed to find Scarb.lock");
   }
 
-  const lockfilePath = stdout.trim().slice(0, -4) + "lock";
-  await exec.getExecOutput("test -f " + lockfilePath).catch((_) => {
-    throw new Error("failed to find Scarb.lock");
-  });
-
-  return lockfilePath;
+  return lockfiles.reduce((prev, next) =>
+    prev.length < next.length ? prev : next,
+  );
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-save.js
@@ -59499,7 +59495,11 @@ async function saveCache() {
     if (primaryKey !== matchedKey) {
       await cache.saveCache([await getCacheDirectory()], primaryKey);
     } else if (primaryKey === "" && matchedKey === "") {
-      core.info(`No cache to validate from.`);
+      // When using action for the first time and the project doesn't have Scarb.lock,
+      // `restoreCache()` returns an error during `getCacheKey()` method.
+      // As a result, primaryKey and matchedKey (by default) are empty strings,
+      // which would satisfy `else` branch, even though no cache would be found.
+      core.info(`Cache entry not found, not saving cache.`);
     } else {
       core.info(`Cache hit occurred, not saving cache.`);
     }
