@@ -59471,25 +59471,19 @@ async function getCacheKey() {
 async function getScarbLockfilePath() {
   const globber = await glob.create("**/Scarb.lock");
   const lockfiles = await globber.glob();
-  const otherglobber = await glob.create("gownoxdddd");
-  const otherglobberfiles = await otherglobber.glob();
-  core.info("\notherglobberfiles type: " + typeof otherglobberfiles);
-  core.info("typeof otehrglobberfiles === undefined: " + (typeof otherglobberfiles === "undefined").valueOf());
-  core.info("otehrglobberfiles == null: " + (otherglobberfiles == null).valueOf() + "\n");
-
+  core.info(lockfiles);
   if (lockfiles.length === 0) {
     throw new Error("failed to find Scarb.lock");
   }
-  const baseLockfile = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next, "");
+  const baseLockfile = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
   core.info("Lockfile is: " + baseLockfile);
-  if (baseLockfile)
-  lockfiles.push("asdf", "adfasdfasd");
-  const test = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
-  core.info(test);
-  const emptyArray = [];
-  const emptyReduce = emptyArray.reduce((prev, next) => prev.length < next.length ? prev : next, "");
-  core.info("emptyreduce: " + emptyReduce);
-  core.info("typeof emptyreduce: " + typeof emptyReduce);
+  // lockfiles.push("asdf", "adfasdfasd");
+  // const test = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
+  // core.info(test);
+  const notemptyArray = [baseLockfile, "adfdsf", "aasdfsadfadsffl", "aa"];
+  const notemptyReduce = notemptyArray.reduce((prev, next) => prev.length < next.length ? prev : next, "");
+  core.info("emptyreduce: " + notemptyReduce);
+  core.info("typeof emptyreduce: " + typeof notemptyReduce);
 
   const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
 
