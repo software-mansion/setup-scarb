@@ -59386,11 +59386,11 @@ var __webpack_exports__ = {};
 __nccwpck_require__.r(__webpack_exports__);
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var lib_core = __nccwpck_require__(2186);
+var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/cache/lib/cache.js
 var cache = __nccwpck_require__(7799);
 // EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
-var lib_exec = __nccwpck_require__(1514);
+var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/glob/lib/glob.js
 var lib_glob = __nccwpck_require__(8090);
 // EXTERNAL MODULE: external "os"
@@ -59399,7 +59399,10 @@ var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 // EXTERNAL MODULE: external "path"
 var external_path_ = __nccwpck_require__(1017);
 var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+;// CONCATENATED MODULE: external "fs/promises"
+const promises_namespaceObject = require("fs/promises");
 ;// CONCATENATED MODULE: ./lib/cache-utils.js
+
 
 
 
@@ -59420,10 +59423,10 @@ async function getCacheDirectory() {
       return wellKnownCachePath();
     }
   } catch (e) {
-    lib_core.debug(`scarb cache path fallback failed: ${e.message}`);
+    core.debug(`scarb cache path fallback failed: ${e.message}`);
   }
 
-  const { stdout, exitCode } = await lib_exec.getExecOutput("scarb cache path");
+  const { stdout, exitCode } = await exec.getExecOutput("scarb cache path");
 
   if (exitCode > 0) {
     throw new Error(
@@ -59435,7 +59438,7 @@ async function getCacheDirectory() {
 }
 
 async function isScarbMissingCachePathCommand() {
-  const { stdout } = await lib_exec.getExecOutput("scarb -V");
+  const { stdout } = await exec.getExecOutput("scarb -V");
   return stdout.match(/^scarb 0\.[0-6]\./) != null;
 }
 
@@ -59469,31 +59472,17 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
-  const globber = await glob.create("**/Scarb.lock");
-  const lockfiles = await globber.glob();
-  if (lockfiles.length === 0) {
-    throw new Error("failed to find Scarb.lock");
-  }
-  const baseLockfile = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
-  core.info("Lockfile is: " + baseLockfile);
-  // lockfiles.push("asdf", "adfasdfasd");
-  // const test = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
-  // core.info(test);
-  const singleElemArray = ["aasdf"];
-  const singleElemReduce = singleElemArray.reduce((prev, next) => prev.length < next.length ? prev : next);
-  core.info("signelelemereduce: " + singleElemReduce);
-  core.info("typeof signelelemereduce: " + typeof singleElemReduce);
+  // const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+  //
+  // if (exitCode > 0) {
+  //   throw new Error(
+  //       "failed to find Scarb.toml: command `scarb manifest-path` failed",
+  //   );
+  // }
 
-  const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+  const lockfilePath = path.join(path.dirname(process.env.GITHUB_WORKSPACE), "Scarb.lock");
 
-  if (exitCode > 0) {
-    throw new Error(
-      "failed to find Scarb.toml: command `scarb manifest-path` failed",
-    );
-  }
-
-  const lockfilePath = stdout.trim().slice(0, -4) + "lock";
-  await exec.getExecOutput("test -f " + lockfilePath).catch((_) => {
+  await fs.access(path.join(lockfilePath, "Scarb.lock")).catch((_) => {
     throw new Error("failed to find Scarb.lock");
   });
 
@@ -59509,23 +59498,23 @@ async function getScarbLockfilePath() {
 
 async function saveCache() {
   try {
-    const pwd = await lib_exec.getExecOutput("pwd");
+    const pwd = await exec.getExecOutput("pwd");
     // core.info(pwd.stdout);
-    const lsla = await lib_exec.getExecOutput("ls -la");
-    const _ = await lib_exec.getExecOutput("ls -la ..");
+    const lsla = await exec.getExecOutput("ls -la");
+    const _ = await exec.getExecOutput("ls -la ..");
     // core.info(lsla.stdout);
-    const primaryKey = lib_core.getState(State.CachePrimaryKey);
-    const matchedKey = lib_core.getState(State.CacheMatchedKey);
+    const primaryKey = core.getState(State.CachePrimaryKey);
+    const matchedKey = core.getState(State.CacheMatchedKey);
 
     if (primaryKey !== matchedKey) {
       await cache.saveCache([await getCacheDirectory()], primaryKey);
     } else if (primaryKey === "" && matchedKey === "") {
-      lib_core.info(`No cache to validate from.`);
+      core.info(`No cache to validate from.`);
     } else {
-      lib_core.info(`Cache hit occurred, not saving cache.`);
+      core.info(`Cache hit occurred, not saving cache.`);
     }
   } catch (e) {
-    lib_core.error(e);
+    core.error(e);
   }
 }
 

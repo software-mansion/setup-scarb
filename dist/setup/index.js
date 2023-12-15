@@ -60590,6 +60590,7 @@ var glob = __nccwpck_require__(8090);
 
 
 
+
 const State = {
   CachePrimaryKey: "primary_key",
   CacheMatchedKey: "matched_key",
@@ -60652,31 +60653,17 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
-  const globber = await glob.create("**/Scarb.lock");
-  const lockfiles = await globber.glob();
-  if (lockfiles.length === 0) {
-    throw new Error("failed to find Scarb.lock");
-  }
-  const baseLockfile = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
-  core.info("Lockfile is: " + baseLockfile);
-  // lockfiles.push("asdf", "adfasdfasd");
-  // const test = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
-  // core.info(test);
-  const singleElemArray = ["aasdf"];
-  const singleElemReduce = singleElemArray.reduce((prev, next) => prev.length < next.length ? prev : next);
-  core.info("signelelemereduce: " + singleElemReduce);
-  core.info("typeof signelelemereduce: " + typeof singleElemReduce);
+  // const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+  //
+  // if (exitCode > 0) {
+  //   throw new Error(
+  //       "failed to find Scarb.toml: command `scarb manifest-path` failed",
+  //   );
+  // }
 
-  const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+  const lockfilePath = external_path_default().join(external_path_default().dirname(process.env.GITHUB_WORKSPACE), "Scarb.lock");
 
-  if (exitCode > 0) {
-    throw new Error(
-      "failed to find Scarb.toml: command `scarb manifest-path` failed",
-    );
-  }
-
-  const lockfilePath = stdout.trim().slice(0, -4) + "lock";
-  await exec.getExecOutput("test -f " + lockfilePath).catch((_) => {
+  await promises_default().access(external_path_default().join(lockfilePath, "Scarb.lock")).catch((_) => {
     throw new Error("failed to find Scarb.lock");
   });
 
