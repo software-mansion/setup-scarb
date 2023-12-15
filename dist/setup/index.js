@@ -60664,7 +60664,7 @@ async function getScarbLockfilePath() {
   // const test = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
   // core.info(test);
   const notemptyArray = [baseLockfile, "adfdsf", "aasdfsadfadsffl", "aa"];
-  const notemptyReduce = notemptyArray.reduce((prev, next) => prev.length < next.length ? prev : next, "");
+  const notemptyReduce = notemptyArray.reduce((prev, next) => prev.length < next.length ? prev : next);
   core.info("emptyreduce: " + notemptyReduce);
   core.info("typeof emptyreduce: " + typeof notemptyReduce);
 
