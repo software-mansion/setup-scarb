@@ -60652,6 +60652,10 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
+  const globber = await glob.create("**/Scarb.lock")
+  const lockfiles = await globber.glob()
+  core.info(lockfiles)
+
   const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
 
   if (exitCode > 0) {

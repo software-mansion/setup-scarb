@@ -59386,7 +59386,7 @@ var __webpack_exports__ = {};
 __nccwpck_require__.r(__webpack_exports__);
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(2186);
+var lib_core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/cache/lib/cache.js
 var cache = __nccwpck_require__(7799);
 // EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
@@ -59420,7 +59420,7 @@ async function getCacheDirectory() {
       return wellKnownCachePath();
     }
   } catch (e) {
-    core.debug(`scarb cache path fallback failed: ${e.message}`);
+    lib_core.debug(`scarb cache path fallback failed: ${e.message}`);
   }
 
   const { stdout, exitCode } = await lib_exec.getExecOutput("scarb cache path");
@@ -59469,6 +59469,10 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
+  const globber = await glob.create("**/Scarb.lock")
+  const lockfiles = await globber.glob()
+  core.info(lockfiles)
+
   const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
 
   if (exitCode > 0) {
@@ -59499,18 +59503,18 @@ async function saveCache() {
     const lsla = await lib_exec.getExecOutput("ls -la");
     const _ = await lib_exec.getExecOutput("ls -la ..");
     // core.info(lsla.stdout);
-    const primaryKey = core.getState(State.CachePrimaryKey);
-    const matchedKey = core.getState(State.CacheMatchedKey);
+    const primaryKey = lib_core.getState(State.CachePrimaryKey);
+    const matchedKey = lib_core.getState(State.CacheMatchedKey);
 
     if (primaryKey !== matchedKey) {
       await cache.saveCache([await getCacheDirectory()], primaryKey);
     } else if (primaryKey === "" && matchedKey === "") {
-      core.info(`No cache to validate from.`);
+      lib_core.info(`No cache to validate from.`);
     } else {
-      core.info(`Cache hit occurred, not saving cache.`);
+      lib_core.info(`Cache hit occurred, not saving cache.`);
     }
   } catch (e) {
-    core.error(e);
+    lib_core.error(e);
   }
 }
 
