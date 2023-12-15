@@ -60590,6 +60590,7 @@ var glob = __nccwpck_require__(8090);
 
 
 
+
 const State = {
   CachePrimaryKey: "primary_key",
   CacheMatchedKey: "matched_key",
@@ -60652,16 +60653,13 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
-  const globber = await glob.create("**/Scarb.lock");
-  const lockfiles = await globber.glob();
+  const lockfilePath = external_path_default().join(process.env.GITHUB_WORKSPACE, "Scarb.lock");
 
-  if (lockfiles.length === 0) {
+  await promises_default().access(lockfilePath).catch((_) => {
     throw new Error("failed to find Scarb.lock");
-  }
+  });
 
-  return lockfiles.reduce((prev, next) =>
-    prev.length < next.length ? prev : next,
-  );
+  return lockfilePath;
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-restore.js

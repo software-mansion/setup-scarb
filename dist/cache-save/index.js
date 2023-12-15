@@ -59399,7 +59399,10 @@ var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 // EXTERNAL MODULE: external "path"
 var external_path_ = __nccwpck_require__(1017);
 var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+;// CONCATENATED MODULE: external "fs/promises"
+const promises_namespaceObject = require("fs/promises");
 ;// CONCATENATED MODULE: ./lib/cache-utils.js
+
 
 
 
@@ -59469,16 +59472,13 @@ async function getCacheKey() {
 }
 
 async function getScarbLockfilePath() {
-  const globber = await glob.create("**/Scarb.lock");
-  const lockfiles = await globber.glob();
+  const lockfilePath = path.join(process.env.GITHUB_WORKSPACE, "Scarb.lock");
 
-  if (lockfiles.length === 0) {
+  await fs.access(lockfilePath).catch((_) => {
     throw new Error("failed to find Scarb.lock");
-  }
+  });
 
-  return lockfiles.reduce((prev, next) =>
-    prev.length < next.length ? prev : next,
-  );
+  return lockfilePath;
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-save.js
