@@ -60654,7 +60654,6 @@ async function getCacheKey() {
 async function getScarbLockfilePath() {
   const globber = await glob.create("**/Scarb.lock");
   const lockfiles = await globber.glob();
-  core.info(lockfiles);
   if (lockfiles.length === 0) {
     throw new Error("failed to find Scarb.lock");
   }
@@ -60663,10 +60662,10 @@ async function getScarbLockfilePath() {
   // lockfiles.push("asdf", "adfasdfasd");
   // const test = lockfiles.reduce((prev, next) => prev.length < next.length ? prev : next);
   // core.info(test);
-  const notemptyArray = [baseLockfile, "adfdsf", "aasdfsadfadsffl", "aa"];
-  const notemptyReduce = notemptyArray.reduce((prev, next) => prev.length < next.length ? prev : next);
-  core.info("emptyreduce: " + notemptyReduce);
-  core.info("typeof emptyreduce: " + typeof notemptyReduce);
+  const singleElemArray = [baseLockfile, "adfdsf", "aasdfsadfadsffl", "aa"];
+  const singleElemReduce = singleElemArray.reduce((prev, next) => prev.length < next.length ? prev : next);
+  core.info("signelelemereduce: " + singleElemReduce);
+  core.info("typeof signelelemereduce: " + typeof singleElemReduce);
 
   const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
 
