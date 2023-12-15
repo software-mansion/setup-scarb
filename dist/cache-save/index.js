@@ -59485,7 +59485,7 @@ async function getScarbLockfilePath() {
   core.info("ENV GITHUB WORKSPACE: \'" + process.env.GITHUB_WORKSPACE + "\'")
   const lockfilePath = path.join(path.dirname(process.env.GITHUB_WORKSPACE), "Scarb.lock");
 
-  await fs.access(path.join(lockfilePath, "Scarb.lock")).catch((_) => {
+  await fs.access(lockfilePath).catch((_) => {
     throw new Error("failed to find Scarb.lock");
   });
 
