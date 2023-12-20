@@ -60590,6 +60590,7 @@ var glob = __nccwpck_require__(8090);
 
 
 
+
 const State = {
   CachePrimaryKey: "primary_key",
   CacheMatchedKey: "matched_key",
@@ -60640,27 +60641,25 @@ function wellKnownCachePath() {
 
 async function getCacheKey() {
   const platform = process.env.RUNNER_OS;
-  const fileHash = await glob.hashFiles(await getScarbManifestPath());
+  const fileHash = await glob.hashFiles(await getScarbLockfilePath());
 
   if (!fileHash) {
     throw new Error(
-      "failed to cache dependencies: unable to hash Scarb.toml file",
+      "failed to cache dependencies: unable to hash Scarb.lock file",
     );
   }
 
   return `scarb-cache-${platform}-${fileHash}`.toLowerCase();
 }
 
-async function getScarbManifestPath() {
-  const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+async function getScarbLockfilePath() {
+  const lockfilePath = external_path_default().join(process.env.GITHUB_WORKSPACE, "Scarb.lock");
 
-  if (exitCode > 0) {
-    throw new Error(
-      "failed to find Scarb.toml: command `scarb manifest-path` failed",
-    );
-  }
+  await promises_default().access(lockfilePath).catch((_) => {
+    throw new Error("failed to find Scarb.lock");
+  });
 
-  return stdout.trim();
+  return lockfilePath;
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-restore.js

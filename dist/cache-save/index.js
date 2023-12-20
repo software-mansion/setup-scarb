@@ -59390,7 +59390,7 @@ var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/cache/lib/cache.js
 var cache = __nccwpck_require__(7799);
 // EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
-var lib_exec = __nccwpck_require__(1514);
+var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/glob/lib/glob.js
 var lib_glob = __nccwpck_require__(8090);
 // EXTERNAL MODULE: external "os"
@@ -59399,7 +59399,10 @@ var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 // EXTERNAL MODULE: external "path"
 var external_path_ = __nccwpck_require__(1017);
 var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+;// CONCATENATED MODULE: external "fs/promises"
+const promises_namespaceObject = require("fs/promises");
 ;// CONCATENATED MODULE: ./lib/cache-utils.js
+
 
 
 
@@ -59423,7 +59426,7 @@ async function getCacheDirectory() {
     core.debug(`scarb cache path fallback failed: ${e.message}`);
   }
 
-  const { stdout, exitCode } = await lib_exec.getExecOutput("scarb cache path");
+  const { stdout, exitCode } = await exec.getExecOutput("scarb cache path");
 
   if (exitCode > 0) {
     throw new Error(
@@ -59435,7 +59438,7 @@ async function getCacheDirectory() {
 }
 
 async function isScarbMissingCachePathCommand() {
-  const { stdout } = await lib_exec.getExecOutput("scarb -V");
+  const { stdout } = await exec.getExecOutput("scarb -V");
   return stdout.match(/^scarb 0\.[0-6]\./) != null;
 }
 
@@ -59457,27 +59460,25 @@ function wellKnownCachePath() {
 
 async function getCacheKey() {
   const platform = process.env.RUNNER_OS;
-  const fileHash = await glob.hashFiles(await getScarbManifestPath());
+  const fileHash = await glob.hashFiles(await getScarbLockfilePath());
 
   if (!fileHash) {
     throw new Error(
-      "failed to cache dependencies: unable to hash Scarb.toml file",
+      "failed to cache dependencies: unable to hash Scarb.lock file",
     );
   }
 
   return `scarb-cache-${platform}-${fileHash}`.toLowerCase();
 }
 
-async function getScarbManifestPath() {
-  const { stdout, exitCode } = await exec.getExecOutput("scarb manifest-path");
+async function getScarbLockfilePath() {
+  const lockfilePath = path.join(process.env.GITHUB_WORKSPACE, "Scarb.lock");
 
-  if (exitCode > 0) {
-    throw new Error(
-      "failed to find Scarb.toml: command `scarb manifest-path` failed",
-    );
-  }
+  await fs.access(lockfilePath).catch((_) => {
+    throw new Error("failed to find Scarb.lock");
+  });
 
-  return stdout.trim();
+  return lockfilePath;
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-save.js
@@ -59493,6 +59494,12 @@ async function saveCache() {
 
     if (primaryKey !== matchedKey) {
       await cache.saveCache([await getCacheDirectory()], primaryKey);
+    } else if (primaryKey === "" && matchedKey === "") {
+      // When using action for the first time and the project doesn't have Scarb.lock,
+      // `restoreCache()` returns an error during `getCacheKey()` method.
+      // As a result, primaryKey and matchedKey (by default) are empty strings,
+      // which would satisfy `else` branch, even though no cache would be found.
+      core.info(`Cache entry not found, not saving cache.`);
     } else {
       core.info(`Cache hit occurred, not saving cache.`);
     }
