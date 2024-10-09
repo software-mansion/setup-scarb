@@ -11,6 +11,9 @@ inputs:
   tool-versions:
     description: Path to .tool-versions file
     required: false
+  scarb-lock:
+    description: Path to Scarb.lock file
+    required: false
 outputs:
   scarb-prefix:
     description: The prefix of the installed Scarb
