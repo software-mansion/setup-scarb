@@ -73693,9 +73693,11 @@ function wellKnownCachePath() {
   }
 }
 
-async function getCacheKey() {
+async function getCacheKey(scarbLockfilePath) {
   const platform = process.env.RUNNER_OS;
-  const fileHash = await glob.hashFiles(await getScarbLockfilePath());
+  const fileHash = await glob.hashFiles(
+    await getScarbLockfilePath(scarbLockfilePath),
+  );
 
   if (!fileHash) {
     throw new Error(
@@ -73706,8 +73708,8 @@ async function getCacheKey() {
   return `scarb-cache-${platform}-${fileHash}`.toLowerCase();
 }
 
-async function getScarbLockfilePath() {
-  const lockfilePath = path.join(process.env.GITHUB_WORKSPACE, "Scarb.lock");
+async function getScarbLockfilePath(scarbLockfilePath) {
+  const lockfilePath = scarbLockfilePath || "Scarb.lock";
 
   await fs.access(lockfilePath).catch((_) => {
     throw new Error("failed to find Scarb.lock");
