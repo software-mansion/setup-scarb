@@ -34,7 +34,8 @@ jobs:
   - Stating a relative or absolute path to the `.tool-versions` file.
   - Should be used only if `scarb-version` is not specified.
 - `scarb-lock` - **Optional**. String.
-  - Stating a relative or absolute path to the `Scarb.lock` file.
+  - Stating a relative or absolute path to the `Scarb.lock` file used for caching dependencies.
+  - Empty/not specified: `Scarb.lock` in the working directory will be used.
 
 ## Outputs
 
