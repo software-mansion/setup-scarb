@@ -89,7 +89,7 @@ jobs:
           scarb-version: nightly
       - run: scarb --version | grep "${{ steps.version.outputs.LATEST_NIGHTLY_VERSION }}"
 
-      - name: "Setup Scarb with `scarb-lock`"
+      - name: "Setup Scarb with `scarb-lock` file in subfolder"
         uses: ./
         with:
           scarb-lock: ./subdir/Scarb.lock
