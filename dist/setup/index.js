@@ -74790,9 +74790,9 @@ function wellKnownCachePath() {
   }
 }
 
-async function getCacheKey() {
+async function getCacheKey(scarbLockPath) {
   const platform = process.env.RUNNER_OS;
-  const fileHash = await glob.hashFiles(await getScarbLockfilePath());
+  const fileHash = await glob.hashFiles(await getScarbLockPath(scarbLockPath));
 
   if (!fileHash) {
     throw new Error(
@@ -74803,8 +74803,8 @@ async function getCacheKey() {
   return `scarb-cache-${platform}-${fileHash}`.toLowerCase();
 }
 
-async function getScarbLockfilePath() {
-  const lockfilePath = external_path_default().join(process.env.GITHUB_WORKSPACE, "Scarb.lock");
+async function getScarbLockPath(scarbLockPath) {
+  const lockfilePath = scarbLockPath || "Scarb.lock";
 
   await promises_default().access(lockfilePath).catch((_) => {
     throw new Error("failed to find Scarb.lock");
@@ -74821,13 +74821,13 @@ async function getScarbLockfilePath() {
 
 
 
-async function restoreCache() {
+async function restoreCache(scarbLockPath) {
   const cacheDir = await getCacheDirectory();
   await promises_default().mkdir(cacheDir, { recursive: true });
 
   core.info(`Restoring Scarb cache into ${cacheDir}`);
 
-  const primaryKey = await getCacheKey();
+  const primaryKey = await getCacheKey(scarbLockPath);
   core.info(`Cache primary key is ${primaryKey}`);
   core.saveState(State.CachePrimaryKey, primaryKey);
 
@@ -74853,6 +74853,7 @@ async function main() {
   try {
     const scarbVersionInput = core.getInput("scarb-version");
     const toolVersionsPathInput = core.getInput("tool-versions");
+    const scarbLockPathInput = core.getInput("scarb-lock");
 
     const { repo: scarbRepo, version: scarbVersion } = await determineVersion(
       scarbVersionInput,
@@ -74886,7 +74887,7 @@ async function main() {
 
     core.setOutput("scarb-version", await getFullVersionFromScarb());
 
-    await restoreCache().catch((e) => {
+    await restoreCache(scarbLockPathInput).catch((e) => {
       core.error(
         `There was an error when restoring cache: ${
           e instanceof Error ? e.message : e
