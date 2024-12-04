@@ -74745,7 +74745,6 @@ var glob = __nccwpck_require__(8090);
 const State = {
   CachePrimaryKey: "primary_key",
   CacheMatchedKey: "matched_key",
-  CacheEnabledKey: "cache_enabled",
 };
 
 async function getCacheDirectory() {
@@ -74850,7 +74849,6 @@ async function restoreCache(scarbLockPath) {
 
 
 
-
 async function main() {
   try {
     const scarbVersionInput = core.getInput("scarb-version");
@@ -74890,7 +74888,6 @@ async function main() {
 
     core.setOutput("scarb-version", await getFullVersionFromScarb());
 
-    core.saveState(State.CacheEnabledKey, enableCache);
     if (enableCache) {
       await restoreCache(scarbLockPathInput).catch((e) => {
         core.error(
