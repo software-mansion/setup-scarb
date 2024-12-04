@@ -73648,6 +73648,7 @@ const promises_namespaceObject = require("fs/promises");
 const State = {
   CachePrimaryKey: "primary_key",
   CacheMatchedKey: "matched_key",
+  CacheEnabledKey: "cache_enabled",
 };
 
 async function getCacheDirectory() {
@@ -73723,6 +73724,13 @@ async function getScarbLockPath(scarbLockPath) {
 
 
 async function saveCache() {
+  const enableCache = JSON.parse(core.getState(State.CacheEnabledKey));
+
+  if (!enableCache) {
+    core.info(`Caching disabled, not saving cache.`);
+    return;
+  }
+
   try {
     const primaryKey = core.getState(State.CachePrimaryKey);
     const matchedKey = core.getState(State.CacheMatchedKey);

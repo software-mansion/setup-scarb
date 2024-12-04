@@ -74745,6 +74745,7 @@ var glob = __nccwpck_require__(8090);
 const State = {
   CachePrimaryKey: "primary_key",
   CacheMatchedKey: "matched_key",
+  CacheEnabledKey: "cache_enabled",
 };
 
 async function getCacheDirectory() {
@@ -74849,11 +74850,13 @@ async function restoreCache(scarbLockPath) {
 
 
 
+
 async function main() {
   try {
     const scarbVersionInput = core.getInput("scarb-version");
     const toolVersionsPathInput = core.getInput("tool-versions");
     const scarbLockPathInput = core.getInput("scarb-lock");
+    const enableCache = core.getBooleanInput("cache");
 
     const { repo: scarbRepo, version: scarbVersion } = await determineVersion(
       scarbVersionInput,
@@ -74887,13 +74890,18 @@ async function main() {
 
     core.setOutput("scarb-version", await getFullVersionFromScarb());
 
-    await restoreCache(scarbLockPathInput).catch((e) => {
-      core.error(
-        `There was an error when restoring cache: ${
-          e instanceof Error ? e.message : e
-        }`,
-      );
-    });
+    core.saveState(State.CacheEnabledKey, enableCache);
+    if (enableCache) {
+      await restoreCache(scarbLockPathInput).catch((e) => {
+        core.error(
+          `There was an error when restoring cache: ${
+            e instanceof Error ? e.message : e
+          }`,
+        );
+      });
+    } else {
+      core.info(`Caching disabled, not restoring cache.`);
+    }
   } catch (e) {
     core.setFailed(e);
   }
