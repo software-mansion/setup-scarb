@@ -36,6 +36,9 @@ jobs:
 - `scarb-lock` - **Optional**. String.
   - Stating a relative or absolute path to the `Scarb.lock` file used for caching dependencies.
   - Empty/not specified: `Scarb.lock` in the working directory will be used.
+- `cache` - **Optional**. Boolean.
+  - Enables caching Scarb dependencies.
+  - Empty/not specified: `true`.
 
 ## Outputs
 
