@@ -74854,6 +74854,7 @@ async function main() {
     const scarbVersionInput = core.getInput("scarb-version");
     const toolVersionsPathInput = core.getInput("tool-versions");
     const scarbLockPathInput = core.getInput("scarb-lock");
+    const enableCache = core.getBooleanInput("cache");
 
     const { repo: scarbRepo, version: scarbVersion } = await determineVersion(
       scarbVersionInput,
@@ -74887,13 +74888,17 @@ async function main() {
 
     core.setOutput("scarb-version", await getFullVersionFromScarb());
 
-    await restoreCache(scarbLockPathInput).catch((e) => {
-      core.error(
-        `There was an error when restoring cache: ${
-          e instanceof Error ? e.message : e
-        }`,
-      );
-    });
+    if (enableCache) {
+      await restoreCache(scarbLockPathInput).catch((e) => {
+        core.error(
+          `There was an error when restoring cache: ${
+            e instanceof Error ? e.message : e
+          }`,
+        );
+      });
+    } else {
+      core.info(`Caching disabled, not restoring cache.`);
+    }
   } catch (e) {
     core.setFailed(e);
   }

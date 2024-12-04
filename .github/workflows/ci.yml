@@ -94,6 +94,11 @@ jobs:
         with:
           scarb-lock: ./subdir/Scarb.lock
 
+      - name: "Setup Scarb with caching disabled"
+        uses: ./
+        with:
+          cache: false
+
       - name: "Create .tool-versions file"
         run: echo "scarb 0.7.0" >> .tool-versions
       - name: "Setup Scarb using `.tool-versions` file"

@@ -73723,6 +73723,13 @@ async function getScarbLockPath(scarbLockPath) {
 
 
 async function saveCache() {
+  const enableCache = core.getBooleanInput("cache");
+
+  if (!enableCache) {
+    core.info(`Caching disabled, not saving cache.`);
+    return;
+  }
+
   try {
     const primaryKey = core.getState(State.CachePrimaryKey);
     const matchedKey = core.getState(State.CacheMatchedKey);
