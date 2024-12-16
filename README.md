@@ -39,6 +39,9 @@ jobs:
 - `cache` - **Optional**. Boolean.
   - Enables caching Scarb dependencies.
   - Empty/not specified: `true`.
+- `add-to-path` - **Optional**. Boolean.
+  - Adds scarb to PATH env.
+  - Empty/not specified: `true`.
 
 ## Outputs
 

@@ -18,6 +18,10 @@ inputs:
     description: Enable dependency caching
     required: false
     default: "true"
+  add-to-path:
+    description: Adds scarb to PATH env
+    required: false
+    default: "true"
 outputs:
   scarb-prefix:
     description: The prefix of the installed Scarb
