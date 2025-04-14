@@ -74573,14 +74573,22 @@ async function determineVersion(
     version = await fetchLatestTag(nightliesRepo);
   }
 
+  if (version === "dev") {
+    throw new Error(
+      "fetching the latest dev version is not currently supported",
+    );
+  }
+
   if (version.startsWith("v")) {
     version = version.substring(1);
   }
 
-  return {
-    repo: version.startsWith("nightly-") ? nightliesRepo : repo,
-    version,
-  };
+  repo =
+    version.startsWith("nightly-") || version.startsWith("dev-")
+      ? nightliesRepo
+      : repo;
+
+  return { repo, version };
 }
 
 function versionWithPrefix(version) {
