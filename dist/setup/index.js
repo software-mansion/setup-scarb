@@ -80556,6 +80556,20 @@ async function getScarbLockPath(scarbLockPath) {
   return lockfilePath;
 }
 
+async function maybeGetScarbTargetDirPath(scarbLockPathInput) {
+  try {
+    let targetPath = external_path_default().join(
+      await getScarbLockPath(scarbLockPathInput),
+      "..",
+      "target",
+    );
+    await promises_default().mkdir(targetPath, { recursive: true });
+    return targetPath;
+  } catch (e) {
+    return null;
+  }
+}
+
 ;// CONCATENATED MODULE: ./lib/cache-restore.js
 
 
@@ -80564,11 +80578,20 @@ async function getScarbLockPath(scarbLockPath) {
 
 
 
-async function restoreCache(scarbLockPath, jobName) {
+async function restoreCache(scarbLockPath, enableTargetsCache, jobName) {
   const cacheDir = await getCacheDirectory();
   await promises_default().mkdir(cacheDir, { recursive: true });
 
   core.info(`Restoring Scarb cache into ${cacheDir}`);
+
+  let cacheDirs = [cacheDir];
+  if (enableTargetsCache) {
+    let targetCache = await maybeGetScarbTargetDirPath(scarbLockPath);
+    if (!!targetCache) {
+      core.info(`Restoring Scarb target cache into ${targetCache}`);
+      cacheDirs.push(targetCache);
+    }
+  }
 
   const baseKey = await getCacheKey(scarbLockPath);
   const primaryKey = `${jobName}-${baseKey}`;
@@ -80576,7 +80599,7 @@ async function restoreCache(scarbLockPath, jobName) {
 
   core.saveState(State.CachePrimaryKey, primaryKey);
 
-  const matchedKey = await cache.restoreCache([cacheDir], primaryKey);
+  const matchedKey = await cache.restoreCache(cacheDirs, primaryKey);
   if (!matchedKey) {
     core.info(`Cache entry not found.`);
     return;
@@ -80600,6 +80623,7 @@ async function main() {
     const toolVersionsPathInput = core.getInput("tool-versions");
     const scarbLockPathInput = core.getInput("scarb-lock");
     const enableCache = core.getBooleanInput("cache");
+    const enableTargetsCache = core.getBooleanInput("cache-targets");
     const jobName = process.env.GITHUB_JOB;
 
     const { repo: scarbRepo, version: scarbVersion } = await determineVersion(
@@ -80635,13 +80659,15 @@ async function main() {
     core.setOutput("scarb-version", await getFullVersionFromScarb());
 
     if (enableCache) {
-      await restoreCache(scarbLockPathInput, jobName).catch((e) => {
-        core.error(
-          `There was an error when restoring cache: ${
-            e instanceof Error ? e.message : e
-          }`,
-        );
-      });
+      await restoreCache(scarbLockPathInput, enableTargetsCache, jobName).catch(
+        (e) => {
+          core.error(
+            `There was an error when restoring cache: ${
+              e instanceof Error ? e.message : e
+            }`,
+          );
+        },
+      );
     } else {
       core.info(`Caching disabled, not restoring cache.`);
     }
