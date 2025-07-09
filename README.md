@@ -39,6 +39,9 @@ jobs:
 - `cache` - **Optional**. Boolean.
   - Enables caching Scarb dependencies.
   - Empty/not specified: `true`.
+- `cache-targets` - **Optional**. Boolean.
+  - If caching is enabled, cache Scarb target directories as well as dependency cache. Useful for incremental compilation.
+  - Empty/not specified: `true`.
 
 ## Outputs
 
