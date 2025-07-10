@@ -79287,6 +79287,7 @@ var external_path_ = __nccwpck_require__(1017);
 var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
 ;// CONCATENATED MODULE: external "fs/promises"
 const promises_namespaceObject = require("fs/promises");
+var promises_default = /*#__PURE__*/__nccwpck_require__.n(promises_namespaceObject);
 ;// CONCATENATED MODULE: ./lib/cache-utils.js
 
 
@@ -79360,11 +79361,25 @@ async function getCacheKey(scarbLockPath) {
 async function getScarbLockPath(scarbLockPath) {
   const lockfilePath = scarbLockPath || "Scarb.lock";
 
-  await fs.access(lockfilePath).catch((_) => {
+  await promises_default().access(lockfilePath).catch((_) => {
     throw new Error("failed to find Scarb.lock");
   });
 
   return lockfilePath;
+}
+
+async function maybeGetScarbTargetDirPath(scarbLockPathInput) {
+  try {
+    let targetPath = external_path_default().join(
+      await getScarbLockPath(scarbLockPathInput),
+      "..",
+      "target",
+    );
+    await promises_default().mkdir(targetPath, { recursive: true });
+    return targetPath;
+  } catch (e) {
+    return null;
+  }
 }
 
 ;// CONCATENATED MODULE: ./lib/cache-save.js
@@ -79375,6 +79390,8 @@ async function getScarbLockPath(scarbLockPath) {
 
 async function saveCache() {
   const enableCache = core.getBooleanInput("cache");
+  const enableTargetsCache = core.getBooleanInput("cache-targets");
+  const scarbLockPathInput = core.getInput("scarb-lock");
 
   if (!enableCache) {
     core.info(`Caching disabled, not saving cache.`);
@@ -79386,7 +79403,15 @@ async function saveCache() {
     const matchedKey = core.getState(State.CacheMatchedKey);
 
     if (primaryKey !== matchedKey) {
-      await cache.saveCache([await getCacheDirectory()], primaryKey);
+      let cacheDirs = [await getCacheDirectory()];
+
+      if (enableTargetsCache) {
+        let targetCache = await maybeGetScarbTargetDirPath(scarbLockPathInput);
+        if (!!targetCache) {
+          cacheDirs.push(targetCache);
+        }
+      }
+      await cache.saveCache(cacheDirs, primaryKey);
     } else if (primaryKey === "" && matchedKey === "") {
       // When using action for the first time and the project doesn't have Scarb.lock,
       // `restoreCache()` returns an error during `getCacheKey()` method.

@@ -18,6 +18,10 @@ inputs:
     description: Enable dependency caching
     required: false
     default: "true"
+  cache-targets:
+    description: If caching is enabled, cache target directories as well
+    required: false
+    default: "true"
 outputs:
   scarb-prefix:
     description: The prefix of the installed Scarb
