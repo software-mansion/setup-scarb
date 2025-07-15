@@ -79382,7 +79382,67 @@ async function maybeGetScarbTargetDirPath(scarbLockPathInput) {
   }
 }
 
+// EXTERNAL MODULE: ./node_modules/@actions/io/lib/io.js
+var io = __nccwpck_require__(7436);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
+;// CONCATENATED MODULE: ./lib/cleanup.js
+
+
+
+
+
+
+async function cleanTargetDir(targetDir) {
+  core.info(`cleaning target directory "${targetDir}"`);
+
+  // remove all *files* from the target directory, except for `CACHEDIR.TAG`
+  // remove `scarb doc` and `scarb package` output directories
+  let dir = await external_fs_default().promises.opendir(targetDir);
+  for await (const dirent of dir) {
+    if (dirent.isDirectory()) {
+      let dirName = external_path_default().join(dir.path, dirent.name);
+      try {
+        if (dirent.name in ["doc", "package", "execute"]) {
+          // There is no point to cache directories created by `scarb doc`, `scarb package` or `scarb execute`.
+          await rm(dir.path, dirent);
+          continue;
+        }
+        await cleanProfileTarget(dirName);
+      } catch {}
+    } else if (dirent.name !== "CACHEDIR.TAG") {
+      await rm(dir.path, dirent);
+    }
+  }
+}
+
+async function cleanProfileTarget(profileDir) {
+  core.debug(`cleaning profile directory "${profileDir}"`);
+
+  // remove all files, but keep all directories
+  let dir = await external_fs_default().promises.opendir(profileDir);
+  for await (const dirent of dir) {
+    if (!dirent.isDirectory()) {
+      await rm(dir.path, dirent);
+    }
+  }
+}
+
+async function rm(parent, dirent) {
+  try {
+    const fileName = external_path_default().join(parent, dirent.name);
+    core.debug(`deleting "${fileName}"`);
+    if (dirent.isFile()) {
+      await external_fs_default().promises.unlink(fileName);
+    } else if (dirent.isDirectory()) {
+      await io.rmRF(fileName);
+    }
+  } catch {}
+}
+
 ;// CONCATENATED MODULE: ./lib/cache-save.js
+
 
 
 
@@ -79408,6 +79468,7 @@ async function saveCache() {
       if (enableTargetsCache) {
         let targetCache = await maybeGetScarbTargetDirPath(scarbLockPathInput);
         if (!!targetCache) {
+          await cleanTargetDir(targetCache);
           cacheDirs.push(targetCache);
         }
       }
