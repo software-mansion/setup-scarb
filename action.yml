@@ -28,7 +28,7 @@ outputs:
   scarb-version:
     description: The version of the installed Scarb
 runs:
-  using: "node20"
+  using: "node24"
   main: "dist/setup/index.js"
   post: "dist/cache-save/index.js"
   post-if: success()
